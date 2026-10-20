@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCity Connect | Grievance Portal</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f3f7f5;
+            color: #24352f;
+            line-height: 1.6;
+        }
+
+        header {
+            background: #174c3c;
+            color: white;
+            padding: 22px 8%;
+        }
+
+        .brand {
+            font-size: 23px;
+            font-weight: bold;
+        }
+
+        .brand span {
+            color: #a9e6c6;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #174c3c, #28785b);
+            color: white;
+            padding: 48px 8%;
+        }
+
+        .hero h1 {
+            font-size: clamp(30px, 5vw, 44px);
+            margin: 0 0 10px;
+        }
+
+        .hero p {
+            max-width: 600px;
+            color: #e1f1e9;
+            margin: 0;
+        }
+
+        .container {
+            width: min(1100px, 90%);
+            margin: 30px auto 50px;
+        }
+
+        .section-heading {
+            margin-bottom: 18px;
+        }
+
+        .section-heading h2 {
+            margin-bottom: 4px;
+            color: #174c3c;
+        }
+
+        .section-heading p {
+            margin-top: 0;
+            color: #697b73;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e1eae5;
+            border-radius: 14px;
+            padding: 26px;
+            margin-bottom: 32px;
+            box-shadow: 0 5px 18px rgba(25, 65, 48, 0.05);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccd9d1;
+            border-radius: 8px;
+            background: #fff;
+            font: inherit;
+            color: #24352f;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: 2px solid #80bca0;
+            border-color: #28785b;
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        button {
+            background: #216b4d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 13px 22px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #174c3c;
+        }
+
+        .success {
+            background: #e5f6eb;
+            color: #17623b;
+            border: 1px solid #b9e5c8;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state {
+            color: #697b73;
+            text-align: center;
+            padding: 28px 10px;
+        }
+
+        .grievance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 18px;
+        }
+
+        .grievance {
+            border: 1px solid #e1eae5;
+            border-radius: 12px;
+            padding: 20px;
+            background: #fff;
+            overflow-wrap: anywhere;
+        }
+
+        .grievance h3 {
+            color: #174c3c;
+            margin-top: 0;
+        }
+
+        .meta {
+            color: #65776e;
+            font-size: 14px;
+            margin: 7px 0;
+        }
+
+        .status {
+            display: inline-block;
+            background: #fff1cc;
+            color: #795600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            padding: 22px;
+            color: #dcebe3;
+            background: #174c3c;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: auto;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            .hero {
+                padding: 35px 6%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="brand">SmartCity <span>Connect</span></div>
+</header>
+
+<section class="hero">
+    <h1>Make your city better.</h1>
+    <p>Report civic issues, bring attention to local problems, and follow the status of submitted grievances.</p>
+</section>
+
+<main class="container">
+
+    <section class="card">
+        <div class="section-heading">
+            <h2>Report a Civic Issue</h2>
+            <p>Fill in the details below to submit your grievance.</p>
+        </div>
+
+        <div class="success"
+             th:if="${message}"
+             th:text="${message}"></div>
+
+        <form action="/submit-grievance" method="post">
+            <input type="hidden"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}">
+            <div class="form-grid">
+
+                <div class="field">
+                    <label for="title">Issue title</label>
+                    <input id="title" type="text" name="title"
+                           maxlength="100" required
+                           placeholder="e.g. Broken streetlight">
+                </div>
+
+                <div class="field">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" required>
+                        <option value="">Select a category</option>
+                        <option value="roads">Roads</option>
+                        <option value="electricity">Electricity</option>
+                        <option value="water supply">Water Supply</option>
+                        <option value="sanitation">Sanitation</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="field full-width">
+                    <label for="location">Location</label>
+                    <input id="location" type="text" name="location"
+                           required placeholder="Enter street or area">
+                </div>
+
+                <div class="field full-width">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description"
+                              maxlength="500" required
+                              placeholder="Describe the issue and where it occurs..."></textarea>
+                </div>
+
+                <div class="full-width">
+                    <button type="submit">Submit Grievance</button>
+                </div>
+
+            </div>
+        </form>
+    </section>
+
+    <section>
+        <div class="section-heading">
+            <h2>Submitted Grievances</h2>
+            <p>View issues reported by the community.</p>
+        </div>
+
+        <div class="card empty-state"
+             th:if="${#lists.isEmpty(grievances)}">
+            No grievances submitted yet. Be the first to report an issue!
+        </div>
+
+        <div class="grievance-grid"
+             th:unless="${#lists.isEmpty(grievances)}">
+
+            <article class="grievance" th:each="g : ${grievances}">
+
+                <h3 th:text="${g.title}">Grievance title</h3>
+
+                <p th:text="${g.description}">Issue description</p>
+
+                <p class="meta">
+                    Location:
+                    <span th:text="${g.location}"></span>
+                </p>
+
+                <p class="meta">
+                    Category:
+                    <span th:text="${g.category}"></span>
+                </p>
+
+                <p class="meta">
+                    Assigned Department:
+                    <span th:text="${g.department}">Department</span>
+                </p>
+
+                <p class="meta">
+                    Grievance ID:
+                    <span th:text="${g.id}"></span>
+                </p>
+
+                <p class="meta">Current Status:</p>
+                <p>
+                    <span class="status"
+                          th:text="${g.status}">PENDING</span>
+                </p>
+
+            </article>
+
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    SmartCity Connect · Smart City Grievance Management System
+</footer>
+
+</body>
+</html>

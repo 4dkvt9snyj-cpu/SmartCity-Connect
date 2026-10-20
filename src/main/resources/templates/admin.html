@@ -1,0 +1,589 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard | SmartCity Connect</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f7f5;
+            color: #24352f;
+            line-height: 1.5;
+        }
+
+        header {
+            background: #174c3c;
+            color: white;
+            padding: 22px 8%;
+        }
+
+        .container {
+            width: min(1100px, 90%);
+            margin: 35px auto;
+        }
+
+        h1, h2 {
+            color: #174c3c;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e1eae5;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 15px rgba(25, 65, 48, 0.04);
+        }
+
+        .meta {
+            color: #65776e;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border-radius: 7px;
+            border: 1px solid #ccd9d1;
+            font: inherit;
+        }
+
+        input, select {
+            background: white;
+            color: #24352f;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid #80bca0;
+            border-color: #28785b;
+        }
+
+        button {
+            background: #216b4d;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #174c3c;
+        }
+
+        .notice {
+            padding: 12px 15px;
+            background: #e5f6eb;
+            color: #17623b;
+            border: 1px solid #b9e5c8;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .stat {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e1eae5;
+        }
+
+        .stat p {
+            margin-bottom: 8px;
+            color: #65776e;
+        }
+
+        .stat h2 {
+            margin: 0;
+            font-size: 30px;
+        }
+
+        .chart-card, .filter-panel {
+            background: white;
+            border: 1px solid #e1eae5;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 25px;
+        }
+
+        .chart-container {
+            max-width: 380px;
+            height: 300px;
+            margin: auto;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 14px;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            font-size: 14px;
+            font-weight: bold;
+            min-width: 0;
+        }
+
+        .filter-grid input,
+        .filter-grid select {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .filter-count {
+            color: #65776e;
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .grievance-card h2 {
+            margin-top: 0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 11px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0.2px;
+        }
+
+        .status-pending {
+            background: #fff1cc;
+            color: #795600;
+        }
+
+        .status-progress {
+            background: #e4edff;
+            color: #2855a1;
+        }
+
+        .status-resolved {
+            background: #e0f5e8;
+            color: #17623b;
+        }
+
+        .status-form {
+            border-top: 1px solid #e8efeb;
+            margin-top: 18px;
+            padding-top: 16px;
+        }
+
+        .status-form label {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 7px;
+        }
+
+        .status-form select {
+            max-width: 260px;
+            width: 100%;
+        }
+
+        .empty-state {
+            color: #65776e;
+            text-align: center;
+        }
+
+        @media (max-width: 650px) {
+            .summary, .filter-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                width: 92%;
+                margin-top: 24px;
+            }
+
+            header {
+                padding: 20px 5%;
+            }
+
+            .card, .chart-card, .filter-panel {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <strong>SmartCity Connect | Staff Dashboard</strong>
+</header>
+
+<main class="container">
+
+    <h1>Grievance Management</h1>
+    <p>Review reported civic issues and update their progress.</p>
+
+    <!-- Confirmation message -->
+    <div class="notice"
+         th:if="${message}"
+         th:text="${message}"
+         role="status"
+         aria-live="polite">
+    </div>
+
+    <!-- Summary statistics -->
+    <section class="summary" aria-label="Grievance summary">
+
+        <div class="stat">
+            <p>Total Grievances</p>
+            <h2 id="totalCount">0</h2>
+        </div>
+
+        <div class="stat">
+            <p>Pending</p>
+            <h2 id="pendingCount">0</h2>
+        </div>
+
+        <div class="stat">
+            <p>Resolved</p>
+            <h2 id="resolvedCount">0</h2>
+        </div>
+
+    </section>
+
+    <!-- Status pie chart -->
+    <section class="chart-card">
+        <h2>Grievance Status Overview</h2>
+
+        <div class="chart-container">
+            <canvas id="statusChart"
+                    aria-label="Pie chart showing grievance statuses"
+                    role="img">
+            </canvas>
+
+            <p id="chartMessage"
+               class="meta"
+               style="text-align:center;">
+            </p>
+        </div>
+    </section>
+
+    <!-- Search and filters -->
+    <section class="filter-panel">
+
+        <h2>Find Grievances</h2>
+
+        <div class="filter-grid">
+
+            <label class="filter-field" for="searchInput">
+                Search by title or location
+                <input type="search"
+                       id="searchInput"
+                       placeholder="e.g. streetlight, Anna Nagar">
+            </label>
+
+            <label class="filter-field" for="statusFilter">
+                Filter by status
+                <select id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="RESOLVED">Resolved</option>
+                </select>
+            </label>
+
+            <label class="filter-field" for="categoryFilter">
+                Filter by category
+                <select id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option value="roads">Roads</option>
+                    <option value="electricity">Electricity</option>
+                    <option value="water supply">Water Supply</option>
+                    <option value="sanitation">Sanitation</option>
+                    <option value="other">Other</option>
+                </select>
+            </label>
+
+        </div>
+
+        <p class="filter-count"
+           id="filterCount"
+           aria-live="polite">
+        </p>
+
+    </section>
+
+    <!-- No grievances in database -->
+    <div id="emptyState"
+         class="card empty-state"
+         th:if="${#lists.isEmpty(grievances)}">
+        No grievances have been submitted yet.
+    </div>
+
+    <!-- No matching filter results -->
+    <div id="noFilterResults"
+         class="card empty-state"
+         style="display:none;"
+         role="status">
+        No grievances match your search or filters.
+        Try changing your selections.
+    </div>
+
+    <!-- Grievance cards -->
+    <article class="card grievance-card"
+             th:each="g : ${grievances}"
+             th:attr="data-status=${g.status},
+                      data-category=${g.category},
+                      data-title=${g.title},
+                      data-location=${g.location}">
+
+        <h2 th:text="${g.title}">Issue title</h2>
+
+        <p th:text="${g.description}">Issue description</p>
+
+        <p class="meta">
+            Location:
+            <span th:text="${g.location}"></span>
+        </p>
+
+        <p class="meta">
+            Category:
+            <span th:text="${g.category}"></span>
+        </p>
+
+        <p class="meta">
+            Department:
+            <span th:text="${g.department}"></span>
+        </p>
+
+        <p class="meta">
+            Grievance ID:
+            <span th:text="${g.id}"></span>
+        </p>
+
+        <p>
+            Current status:
+            <strong class="status-badge"
+                    th:classappend="${g.status == 'PENDING' ? ' status-pending' : (g.status == 'IN_PROGRESS' ? ' status-progress' : ' status-resolved')}"
+                    th:text="${g.status}">
+                PENDING
+            </strong>
+        </p>
+
+        <!-- Status-update form with CSRF protection -->
+        <form class="status-form"
+              action="/update-status"
+              method="post">
+
+            <input type="hidden"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}">
+
+            <input type="hidden"
+                   name="id"
+                   th:value="${g.id}">
+
+            <label th:for="${'status-' + g.id}">
+                Update status:
+            </label>
+
+            <select th:id="${'status-' + g.id}"
+                    name="status"
+                    required>
+
+                <option value="PENDING"
+                        th:selected="${g.status == 'PENDING'}">
+                    Pending
+                </option>
+
+                <option value="IN_PROGRESS"
+                        th:selected="${g.status == 'IN_PROGRESS'}">
+                    In Progress
+                </option>
+
+                <option value="RESOLVED"
+                        th:selected="${g.status == 'RESOLVED'}">
+                    Resolved
+                </option>
+
+            </select>
+
+            <br>
+
+            <button type="submit">Save Status</button>
+
+        </form>
+
+    </article>
+
+</main>
+
+<script>
+    const cards = Array.from(
+        document.querySelectorAll(".grievance-card")
+    );
+
+    // Calculate statistics from all grievances.
+    let pending = 0;
+    let inProgress = 0;
+    let resolved = 0;
+
+    cards.forEach(card => {
+        const status = card.dataset.status;
+
+        if (status === "PENDING") {
+            pending++;
+        } else if (status === "IN_PROGRESS") {
+            inProgress++;
+        } else if (status === "RESOLVED") {
+            resolved++;
+        }
+    });
+
+    document.getElementById("totalCount").textContent =
+        cards.length;
+
+    document.getElementById("pendingCount").textContent =
+        pending;
+
+    document.getElementById("resolvedCount").textContent =
+        resolved;
+
+    // Create the pie chart.
+    const chartCanvas = document.getElementById("statusChart");
+    const chartMessage = document.getElementById("chartMessage");
+
+    if (cards.length === 0) {
+        chartMessage.textContent =
+            "Submit a grievance to see the chart.";
+    }
+
+    if (typeof Chart !== "undefined") {
+        new Chart(chartCanvas, {
+            type: "pie",
+            data: {
+                labels: ["Pending", "In Progress", "Resolved"],
+                datasets: [{
+                    data: [pending, inProgress, resolved],
+                    backgroundColor: [
+                        "#E8AD45",
+                        "#6D91CF",
+                        "#4B9B78"
+                    ],
+                    borderWidth: 2,
+                    borderColor: "#ffffff"
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                }
+            }
+        });
+    } else {
+        chartMessage.textContent =
+            "The chart could not load. Check your internet connection and refresh.";
+    }
+
+    // Search and filter grievances.
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const categoryFilter = document.getElementById("categoryFilter");
+    const filterCount = document.getElementById("filterCount");
+    const noFilterResults = document.getElementById("noFilterResults");
+    const emptyState = document.getElementById("emptyState");
+
+    function filterGrievances() {
+        const searchTerm =
+            searchInput.value.trim().toLowerCase();
+
+        const selectedStatus = statusFilter.value;
+
+        const selectedCategory =
+            categoryFilter.value.trim().toLowerCase();
+
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const title =
+                (card.dataset.title || "").toLowerCase();
+
+            const location =
+                (card.dataset.location || "").toLowerCase();
+
+            const status = card.dataset.status || "";
+
+            const category =
+                (card.dataset.category || "").trim().toLowerCase();
+
+            const matchesSearch =
+                title.includes(searchTerm) ||
+                location.includes(searchTerm);
+
+            const matchesStatus =
+                selectedStatus === "" ||
+                status === selectedStatus;
+
+            const matchesCategory =
+                selectedCategory === "" ||
+                category === selectedCategory;
+
+            const matches =
+                matchesSearch &&
+                matchesStatus &&
+                matchesCategory;
+
+            card.style.display = matches ? "" : "none";
+
+            if (matches) {
+                visibleCount++;
+            }
+        });
+
+        filterCount.textContent =
+            `Showing ${visibleCount} of ${cards.length} grievances`;
+
+        noFilterResults.style.display =
+            cards.length > 0 && visibleCount === 0
+                ? "block"
+                : "none";
+
+        if (emptyState) {
+            emptyState.style.display =
+                cards.length === 0 ? "block" : "none";
+        }
+    }
+
+    searchInput.addEventListener("input", filterGrievances);
+    statusFilter.addEventListener("change", filterGrievances);
+    categoryFilter.addEventListener("change", filterGrievances);
+
+    // Show all grievances when the page first loads.
+    filterGrievances();
+</script>
+
+</body>
+</html>
